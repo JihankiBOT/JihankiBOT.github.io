@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Management - mefiyのサーバー販売管理サイト</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>mefiyのサーバー販売管理サイト</h1>
+        <nav>
+            <a href="index.html">トップ</a>
+            <a href="sales_list.html">商品一覧</a>
+            <a href="your_sales_list.html">あなたの販売一覧</a>
+            <button id="loginButton" class="discord-login-btn" style="display:none;">
+                Discordでログイン
+            </button>
+            <span id="welcomeMessage" style="display:none; color: white; margin-left: 20px;"></span>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <h2>新しく販売を開始します。</h2>
+            <p>以下の項目をすべて入力し、「販売を開始する」ボタンを押してください。</p>
+        </section>
+
+        <form id="saleForm" class="form-card">
+            
+            <div class="form-group">
+                <label for="itemType">① 種類 <span class="required">(必須)</span></label>
+                <select id="itemType" name="itemType" required>
+                    <option value="" disabled selected>選択してください</option>
+                    <option value="ぷにぷに石垢">ぷにぷに石垢</option>
+                    <option value="バウンティ石垢">バウンティ石垢</option>
+                    <option value="ぷにぷに垢">ぷにぷに垢</option>
+                    <option value="その他">その他</option>
+                </select>
+                <input type="text" id="otherType" placeholder="その他の種類を記入" style="display:none; margin-top: 10px;">
+            </div>
+
+            <div class="form-group">
+                <label for="title">② タイトル <span class="required">(必須)</span></label>
+                <input type="text" id="title" name="title" required placeholder="例: 激レアSSランク多数！最強アカウント">
+            </div>
+
+            <div class="form-group">
+                <label for="price">③ 金額 (半角数字のみ) <span class="required">(必須)</span></label>
+                <input type="number" id="price" name="price" required min="1" placeholder="例: 15000">
+            </div>
+
+            <div class="form-group">
+                <label>④ 値下げ交渉の可否 <span class="required">(必須)</span></label>
+                <div class="radio-group">
+                    <input type="radio" id="negotiable_yes" name="negotiable" value="true" required>
+                    <label for="negotiable_yes">許可</label>
+                    
+                    <input type="radio" id="negotiable_no" name="negotiable" value="false">
+                    <label for="negotiable_no">拒否</label>
+                </div>
+            </div>
+
+            <div class="form-group checkbox-group">
+                <input type="checkbox" id="consent" required>
+                <label for="consent">⑤ 万が一何かあってもサーバーサポートチームは対応しません。それでもいいですか？ <span class="required">(必須)</span></label>
+            </div>
+
+            <button type="submit" id="submitBtn">販売を開始する</button>
+
+            <p id="message" style="margin-top: 20px;"></p>
+        </form>
+    </main>
+
+    <footer>
+        <p>&copy; mefiy Server Sales Management</p>
+    </footer>
+
+    <script src="index.js"></script> 
+    <script src="sales_management.js"></script>
+</body>
+</html>
