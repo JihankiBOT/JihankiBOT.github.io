@@ -1,13 +1,14 @@
-// index.js (最終修正版)
+// index.js
 
 // --- ⚠️ Discord設定値に置き換えてください ⚠️ ---
+// 以前のやり取りで確定した値です
 const CLIENT_ID = '1426891656405450764'; 
 const REDIRECT_URI = 'https://jihanki-bot-iwakazu0905.replit.app/callback'; 
-const SCOPES = 'identify'; // identifyのみで十分
+const SCOPES = 'identify'; 
+// ------------------------------------------
 
 const DISCORD_OAUTH_URL = 'https://discord.com/oauth2/authorize';
 const authUrl = `${DISCORD_OAUTH_URL}?response_type=code&client_id=${CLIENT_ID}&scope=${SCOPES}&redirect_uri=${REDIRECT_URI}`;
-// ------------------------------------------
 
 // DOM要素
 const loginButton = document.getElementById('loginButton');
@@ -27,7 +28,7 @@ if (mainLoginButton) {
 }
 
 // -----------------------------------------------------------------
-// 【重要: 修正・追加部分】ログイン状態の確認と処理
+// ログイン状態の確認と処理
 // -----------------------------------------------------------------
 function checkLoginStatus() {
     const params = new URLSearchParams(window.location.search);
@@ -42,7 +43,6 @@ function checkLoginStatus() {
         localStorage.setItem('username', usernameFromUrl);
         
         // パラメータをクリアするためにURLを書き換える
-        // (これにより、リロード時にURLパラメータが残りません)
         const cleanUrl = window.location.pathname;
         history.replaceState(null, '', cleanUrl); 
     }
@@ -77,9 +77,39 @@ function checkLoginStatus() {
 // ページロード時に実行
 checkLoginStatus();
 
-// ----------------------------------------------------
-// 【補足】商品リスト表示（ダミー）
-// ----------------------------------------------------
-// 本来、ここにSupabaseからデータを取得し、新着商品10個をリスト表示するJSコードが入ります。
-// 例: fetch('YOUR_SUPABASE_URL/rest/v1/sales_items?order=created_at.desc&limit=10', ...)
-// ----------------------------------------------------
+// -----------------------------------------------------------------
+// 【今後の拡張用】SupabaseのURLを定義（サーバー側のキーは不要）
+// -----------------------------------------------------------------
+// SupabaseのURLをここに設定しておくと、他のJSファイルでAPI呼び出しが可能になります
+const SUPABASE_URL = 'YOUR_SUPABASE_URL'; // 実際のSupabase URLに置き換えてください
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // 実際のAnon Keyに置き換えてください
+
+// -----------------------------------------------------------------
+// 【今後の拡張用】商品表示のためのヘルパー関数
+// -----------------------------------------------------------------
+// Supabaseから取得したデータを使って商品カードのHTMLを生成する関数（ダミー）
+function createItemCard(item) {
+    const negotiableText = item.negotiable ? "可能" : "不可";
+    const statusClass = item.status === 'negotiating' ? 'status-negotiating' : '';
+    
+    // 注意: 販売者名を取得するには、Discord APIか別のSupabaseテーブルが必要
+    const sellerDisplay = item.seller_id; 
+
+    return `
+        <div class="item-card ${statusClass}">
+            <h4 class="item-title">${item.title}</h4>
+            <p><strong>種類:</strong> ${item.item_type}</p>
+            <p><strong>金額:</strong> ¥${item.price.toLocaleString()}</p>
+            <p><strong>値下げ交渉:</strong> ${negotiableText}</p>
+            <p><strong>販売者ID:</strong> ${sellerDisplay}</p>
+            <p class="item-id">ID: ${item.id.substring(0, 8)}...</p>
+            <button onclick="alert('購入機能は現在構築中です。')">詳細を見る</button>
+        </div>
+    `;
+}
+
+// index.htmlのトップページの商品リストを更新する（ダミー）
+if (document.getElementById('newItemsList')) {
+    // 実際にはここでSupabaseから最新10件のデータを取得し、
+    // newItemsList.innerHTML = data.map(createItemCard).join(''); で表示します。
+}
