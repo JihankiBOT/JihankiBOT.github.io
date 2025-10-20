@@ -1,1 +1,0 @@
-# JihankiBOT.github.io
