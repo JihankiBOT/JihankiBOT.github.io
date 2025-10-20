@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>あなたの販売一覧 - mefiyのサーバー販売管理サイト</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>mefiyのサーバー販売管理サイト</h1>
+        <nav>
+            <a href="index.html">トップ</a>
+            <a href="sales_list.html">商品一覧</a>
+            <a href="your_sales_list.html">あなたの販売一覧</a>
+            <button id="loginButton" class="discord-login-btn" style="display:none;">
+                Discordでログイン
+            </button>
+            <span id="welcomeMessage" style="display:none; color: white; margin-left: 20px;"></span>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <h2>あなたの現在販売している商品一覧</h2>
+            <p>あなたがDiscordでログイン済みの場合、現在販売中の商品がここに表示されます。</p>
+            
+            <a href="sales_management.html" class="large-btn" style="text-decoration: none;">
+                <button type="button">新しく販売する</button>
+            </a>
+        </section>
+
+        <section class="item-list-section">
+            <div id="yourSalesItemsGrid" class="item-cards-grid">
+                <p id="loadingMessage">データを読み込み中です...</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; mefiy Server Sales Management</p>
+    </footer>
+
+    <script src="index.js"></script>
+    <script src="your_sales_list.js"></script>
+</body>
+</html>
