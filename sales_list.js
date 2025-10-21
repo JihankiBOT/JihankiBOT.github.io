@@ -1,63 +1,126 @@
-// sales_list.js
+// sales_list.js (GitHub Pagesでホスト)
 
-const salesItemsGrid = document.getElementById('salesItemsGrid');
-const applyFiltersBtn = document.getElementById('applyFilters');
+const itemListContainer = document.getElementById('itemList');
+const loadingMessage = document.getElementById('loadingMessage');
+const tagFilter = document.getElementById('tagFilter');
+const sellerFilter = document.getElementById('sellerFilter');
+const sortOrder = document.getElementById('sortOrder');
 
-// Supabaseクライアントの初期化 (index.jsから定数を取得)
-// const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); // 正しい初期化方法
+let allItems = [];
+let allSellers = {}; // {user_id: username}
 
-applyFiltersBtn.addEventListener('click', () => {
-    loadSalesItems();
-});
-
-async function loadSalesItems() {
-    salesItemsGrid.innerHTML = '<p>データを読み込み中です...</p>';
-    
-    const filterType = document.getElementById('filterType').value;
-    const filterSeller = document.getElementById('filterSeller').value.trim();
-    const sortOrder = document.getElementById('sortOrder').value;
-
-    let query = `sales_items?select=*`;
-    
-    // フィルターの構築（Supabaseのクエリパラメータとして）
-    if (filterType) {
-        query += `&item_type=eq.${filterType}`;
-    }
-    if (filterSeller) {
-        query += `&seller_id=eq.${filterSeller}`;
-    }
-    
-    // ステータスは'posted'のみを表示
-    query += `&status=eq.posted`;
-    
-    // 並び替え
-    query += `&order=created_at.${sortOrder}`;
-    
+/**
+ * 商品と販売者の全リストを取得します。
+ */
+async function fetchAllItems() {
+    loadingMessage.textContent = '商品データを取得中です...';
     try {
-        // 【注意】fetch()でのSupabase API呼び出しの雛形
-        // 実際には、適切なヘッダーとURLでfetchを実行する必要があります
-        // const response = await fetch(`${SUPABASE_URL}/rest/v1/${query}`, {
-        //     headers: { 'apikey': SUPABASE_ANON_KEY }
-        // });
-        // const data = await response.json();
-        
-        // **代替のダミーデータ（動作確認用）**
-        const data = [
-            { id: 'a1b2c3d4...', title: '最強アカウント', item_type: 'ぷにぷに石垢', price: 15000, negotiable: true, seller_id: '12345...' , status: 'posted'},
-            { id: 'e5f6g7h8...', title: '初期アカウント', item_type: 'バウンティ石垢', price: 3000, negotiable: false, seller_id: '98765...' , status: 'posted'},
-        ];
+        // 1. 全商品を取得
+        const { data: items, error: itemsError } = await supabaseClient
+            .from('sales_items')
+            .select('*')
+            .in('status', ['posted', 'negotiating']); // 掲載中または交渉中の商品のみ
 
-        if (data.length === 0) {
-            salesItemsGrid.innerHTML = '<p>該当する商品はありません。</p>';
-        } else {
-            salesItemsGrid.innerHTML = data.map(createItemCard).join('');
-        }
+        if (itemsError) throw itemsError;
+        allItems = items;
+
+        // 2. 販売者IDのリストを作成
+        const sellerIds = [...new Set(items.map(item => item.seller_id))];
+        
+        // 3. (本来はDiscord APIで名前を取得するが、ここではSupabaseの別のテーブルを使うか仮定)
+        // 簡易実装のため、ここではIDと仮の名称を使用します。
+        // ★★★ 実際の運用ではDiscord APIで名前を取得する必要があります ★★★
+        allSellers = {};
+        sellerIds.forEach(id => {
+            // ここでは簡易的にIDの一部を名前と見なします
+            allSellers[id] = `User_${id.substring(0, 6)}`;
+            // ログインユーザーの名前がlocalStorageにあればそれを使う
+            if (id === localStorage.getItem('user_id')) {
+                allSellers[id] = localStorage.getItem('username');
+            }
+        });
+
+        // 4. フィルタリングと表示を初期化
+        applyFiltersAndDisplay();
 
     } catch (error) {
-        console.error('商品データ取得エラー:', error);
-        salesItemsGrid.innerHTML = '<p>商品データの読み込みに失敗しました。</p>';
+        console.error('商品の取得中にエラーが発生:', error);
+        loadingMessage.textContent = '❌ 商品の取得に失敗しました。';
     }
 }
 
-// ページロード時に実行
-loadSalesItems();
+/**
+ * フィルターとソートを適用して商品を表示します。
+ */
+function applyFiltersAndDisplay(limit = null) {
+    let filteredItems = [...allItems];
+
+    const tagValue = tagFilter ? tagFilter.value : '';
+    const sellerValue = sellerFilter ? sellerFilter.value.toLowerCase() : '';
+    const sortValue = sortOrder ? sortOrder.value : 'newest';
+
+    // フィルタリング
+    if (tagValue) {
+        filteredItems = filteredItems.filter(item => item.item_type === tagValue);
+    }
+    
+    if (sellerValue) {
+        filteredItems = filteredItems.filter(item => {
+            const sellerName = allSellers[item.seller_id] || '';
+            return sellerName.toLowerCase().includes(sellerValue);
+        });
+    }
+
+    // ソート
+    filteredItems.sort((a, b) => {
+        const dateA = new Date(a.created_at).getTime();
+        const dateB = new Date(b.created_at).getTime();
+        
+        if (sortValue === 'newest') {
+            return dateB - dateA; // 新着順
+        } else {
+            return dateA - dateB; // 古い順
+        }
+    });
+    
+    // 上位N件に制限 (トップページ用)
+    if (limit) {
+        filteredItems = filteredItems.slice(0, limit);
+    }
+
+    // 表示
+    renderItems(filteredItems);
+}
+
+/**
+ * フィルタリングされた商品をDOMに描画します。
+ */
+function renderItems(items) {
+    if (itemListContainer) {
+        itemListContainer.innerHTML = ''; // クリア
+    }
+
+    if (items.length === 0) {
+        const message = document.createElement('p');
+        message.textContent = '該当する商品はありません。';
+        itemListContainer.appendChild(message);
+        return;
+    }
+
+    items.forEach(item => {
+        const sellerName = allSellers[item.seller_id] || '不明な販売者';
+        const cardHtml = createItemCard(item, sellerName);
+        itemListContainer.insertAdjacentHTML('beforeend', cardHtml);
+    });
+}
+
+// ページによって実行する関数を分ける
+if (document.title.includes('商品一覧')) {
+    tagFilter.addEventListener('change', () => applyFiltersAndDisplay());
+    sellerFilter.addEventListener('input', () => applyFiltersAndDisplay());
+    sortOrder.addEventListener('change', () => applyFiltersAndDisplay());
+    fetchAllItems();
+
+} else if (document.title.includes('ホーム')) {
+    fetchAllItems();
+}
